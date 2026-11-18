@@ -1,5 +1,5 @@
 name: "Website Screenshot: Full Page, Mobile, PDF"
-description: "Capture full-page screenshots or PDFs of any URL (preview deploys, docs, competitors) on desktop and mobile, saved as files and a workflow artifact."
+description: "Capture full-page screenshots or PDFs of any URL on desktop and mobile, saved as files and a workflow artifact."
 author: "Neocraft"
 branding:
   icon: "camera"
