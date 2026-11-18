@@ -1,0 +1,116 @@
+name: "Website Screenshot: Full Page, Mobile, PDF"
+description: "Capture full-page screenshots or PDFs of any URL (preview deploys, docs, competitors) on desktop and mobile, saved as files and a workflow artifact."
+author: "Neocraft"
+branding:
+  icon: "camera"
+  color: "blue"
+
+inputs:
+  apify-token:
+    description: "Your Apify API token (store it as a secret). Runs are billed to this Apify account."
+    required: true
+  urls:
+    description: "URLs to capture, separated by commas or new lines."
+    required: true
+  devices:
+    description: "Device presets, comma separated (desktop, desktop-hd, laptop, laptop-small, tablet, tablet-landscape, mobile, mobile-small, mobile-android). One capture per URL and device."
+    required: false
+    default: "desktop"
+  format:
+    description: "png, jpeg, webp or pdf."
+    required: false
+    default: "png"
+  capture-mode:
+    description: "fullPage or viewport."
+    required: false
+    default: "fullPage"
+  wait-until:
+    description: "Page load event to wait for: load, domcontentloaded or networkidle."
+    required: false
+    default: "load"
+  delay-ms:
+    description: "Extra wait before the capture, in milliseconds."
+    required: false
+    default: "0"
+  color-scheme:
+    description: "light, dark or no-preference."
+    required: false
+    default: "light"
+  output-dir:
+    description: "Directory where the files are downloaded."
+    required: false
+    default: "screenshots"
+  upload-artifact:
+    description: "Upload the output directory as a workflow artifact."
+    required: false
+    default: "true"
+  artifact-name:
+    description: "Name of the uploaded artifact."
+    required: false
+    default: "screenshots"
+  fail-on-error:
+    description: "Fail the step when at least one capture failed."
+    required: false
+    default: "false"
+  extra-input:
+    description: "Optional JSON object merged into the Actor input (any field of neocraft/website-screenshot-pro, e.g. hideSelectors, cookies, customCss)."
+    required: false
+    default: ""
+  max-total-charge-usd:
+    description: "Hard spend cap for the run in USD. 'auto' = $0.008 per capture + $0.02 margin."
+    required: false
+    default: "auto"
+  timeout-secs:
+    description: "Maximum run time of the Actor in seconds."
+    required: false
+    default: "600"
+
+outputs:
+  count:
+    description: "Number of files saved."
+    value: ${{ steps.run.outputs.count }}
+  failed-count:
+    description: "Number of failed captures."
+    value: ${{ steps.run.outputs.failed-count }}
+  output-dir:
+    description: "Directory containing the files and screenshots.json."
+    value: ${{ steps.run.outputs.output-dir }}
+  files:
+    description: "Saved file paths, one per line."
+    value: ${{ steps.run.outputs.files }}
+  screenshot-urls:
+    description: "JSON array of {url, device, screenshotUrl} (files hosted in your Apify storage)."
+    value: ${{ steps.run.outputs.screenshot-urls }}
+  results-file:
+    description: "Path of the full JSON results."
+    value: ${{ steps.run.outputs.results-file }}
+  run-url:
+    description: "Apify Console URL of the run."
+    value: ${{ steps.run.outputs.run-url }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: run
+      shell: bash
+      run: bash "${GITHUB_ACTION_PATH}/entrypoint.sh"
+      env:
+        APIFY_TOKEN: ${{ inputs.apify-token }}
+        INPUT_URLS: ${{ inputs.urls }}
+        INPUT_DEVICES: ${{ inputs.devices }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_CAPTURE_MODE: ${{ inputs.capture-mode }}
+        INPUT_WAIT_UNTIL: ${{ inputs.wait-until }}
+        INPUT_DELAY_MS: ${{ inputs.delay-ms }}
+        INPUT_COLOR_SCHEME: ${{ inputs.color-scheme }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        INPUT_EXTRA_INPUT: ${{ inputs.extra-input }}
+        INPUT_MAX_TOTAL_CHARGE_USD: ${{ inputs.max-total-charge-usd }}
+        INPUT_TIMEOUT_SECS: ${{ inputs.timeout-secs }}
+    - if: ${{ always() && inputs.upload-artifact == 'true' && steps.run.outputs.count != '' && steps.run.outputs.count != '0' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.output-dir }}
+        if-no-files-found: ignore

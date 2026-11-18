@@ -1,0 +1,26 @@
+# Screenshot a preview deployment on each pull request and upload the images as an artifact.
+name: Preview screenshots
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - id: shots
+        uses: Neocraft-tools/website-screenshot-action@v1
+        with:
+          apify-token: ${{ secrets.APIFY_TOKEN }}
+          # replace with your preview URL (Vercel, Netlify, Cloudflare Pages...)
+          urls: |
+            https://preview-${{ github.event.pull_request.number }}.example.com/
+            https://preview-${{ github.event.pull_request.number }}.example.com/pricing
+          devices: desktop, mobile
+          format: png
+          artifact-name: preview-screenshots
+      - run: echo "${{ steps.shots.outputs.count }} screenshot(s) saved"
